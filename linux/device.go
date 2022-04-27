@@ -5,10 +5,10 @@ import (
 	"io"
 	"log"
 
-	"github.com/go-ble/ble"
-	"github.com/go-ble/ble/linux/att"
-	"github.com/go-ble/ble/linux/gatt"
-	"github.com/go-ble/ble/linux/hci"
+	"github.com/TSI-Shoreview/ble"
+	"github.com/TSI-Shoreview/ble/linux/att"
+	"github.com/TSI-Shoreview/ble/linux/gatt"
+	"github.com/TSI-Shoreview/ble/linux/hci"
 	"github.com/pkg/errors"
 )
 
@@ -116,8 +116,8 @@ func (d *Device) Advertise(ctx context.Context, adv ble.Advertisement) error {
 }
 
 // AdvertiseNameAndServices advertises device name, and specified service UUIDs.
-// It tres to fit the UUIDs in the advertising packet as much as possible.
-// If name doesn't fit in the advertising packet, it will be put in scan response.
+// It tries to fit the UUIDs in the advertising packet as much as possible.
+// If the name doesn't fit in the advertising packet, it will be put in the scan response.
 func (d *Device) AdvertiseNameAndServices(ctx context.Context, name string, uuids ...ble.UUID) error {
 	if err := d.HCI.AdvertiseNameAndServices(name, uuids...); err != nil {
 		return err
@@ -127,9 +127,21 @@ func (d *Device) AdvertiseNameAndServices(ctx context.Context, name string, uuid
 	return ctx.Err()
 }
 
-// AdvertiseMfgData avertises the given manufacturer data.
+// AdvertiseMfgData advertises the given manufacturer data.
 func (d *Device) AdvertiseMfgData(ctx context.Context, id uint16, b []byte) error {
 	if err := d.HCI.AdvertiseMfgData(id, b); err != nil {
+		return err
+	}
+	<-ctx.Done()
+	d.HCI.StopAdvertising()
+	return ctx.Err()
+}
+
+// AdvertiseNameMfgDataAndServices advertises the name, manufacturing data and services of the device
+// It tries to fit the UUIDs in the advertising packet as much as possible.
+// If the name doesn't fit in the advertising packet, it will be put in the scan response.
+func (d *Device) AdvertiseNameMfgDataAndServices(ctx context.Context, name string, id uint16, md []byte, uuids ...ble.UUID) error {
+	if err := d.HCI.AdvertiseNameMfgDataAndServices(name, id, md, uuids...); err != nil {
 		return err
 	}
 	<-ctx.Done()
