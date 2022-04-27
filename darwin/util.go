@@ -1,8 +1,8 @@
 package darwin
 
 import (
-	"github.com/go-ble/ble"
 	"github.com/JuulLabs-OSS/cbgo"
+	"github.com/TSI-Shoreview/ble"
 )
 
 func uuidSlice(uu []ble.UUID) [][]byte {

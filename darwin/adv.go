@@ -1,7 +1,7 @@
 package darwin
 
 import (
-	"github.com/go-ble/ble"
+	"github.com/TSI-Shoreview/ble"
 )
 
 type adv struct {
