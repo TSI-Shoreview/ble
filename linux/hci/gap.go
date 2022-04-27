@@ -127,13 +127,49 @@ func (h *HCI) AdvertiseNameAndServices(name string, uuids ...ble.UUID) error {
 	return h.Advertise()
 }
 
-// AdvertiseMfgData avertises the given manufacturer data.
+// AdvertiseMfgData advertises the given manufacturer data.
 func (h *HCI) AdvertiseMfgData(id uint16, md []byte) error {
 	ad, err := adv.NewPacket(adv.ManufacturerData(id, md))
 	if err != nil {
 		return err
 	}
 	if err := h.SetAdvertisement(ad.Bytes(), nil); err != nil {
+		return nil
+	}
+	return h.Advertise()
+}
+
+// AdvertiseNameMfgDataAndServices advertises the name, Manufacturing Data and services of the device
+func (h *HCI) AdvertiseNameMfgDataAndServices(name string, id uint16, md []byte, uuids ...ble.UUID) error {
+	ad, err := adv.NewPacket(adv.ManufacturerData(id, md), adv.Flags(adv.FlagGeneralDiscoverable|adv.FlagLEOnly))
+	if err != nil {
+		return err
+	}
+	f := adv.AllUUID
+
+	// Current length of ad packet plus two bytes of length and tag.
+	l := ad.Len() + 1 + 1
+	for _, u := range uuids {
+		l += u.Len()
+	}
+	if l > adv.MaxEIRPacketLength {
+		f = adv.SomeUUID
+	}
+	for _, u := range uuids {
+		if err := ad.Append(f(u)); err != nil {
+			if err == adv.ErrNotFit {
+				break
+			}
+			return err
+		}
+	}
+	sr, _ := adv.NewPacket()
+	switch {
+	case ad.Append(adv.CompleteName(name)) == nil:
+	case sr.Append(adv.CompleteName(name)) == nil:
+	case sr.Append(adv.ShortName(name)) == nil:
+	}
+	if err := h.SetAdvertisement(ad.Bytes(), sr.Bytes()); err != nil {
 		return nil
 	}
 	return h.Advertise()
